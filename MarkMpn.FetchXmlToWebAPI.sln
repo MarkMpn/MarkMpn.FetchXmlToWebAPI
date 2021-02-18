@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MarkMpn.FetchXmlToWebAPI", "MarkMpn.FetchXmlToWebAPI\MarkMpn.FetchXmlToWebAPI.shproj", "{543E6D79-2913-4B00-AAAC-5661F6ADB1A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarkMpn.FetchXmlToWebAPI.Tests", "MarkMpn.FetchXmlToWebAPI.Tests\MarkMpn.FetchXmlToWebAPI.Tests.csproj", "{E463D224-EB4F-4808-BFA1-66ABFBFCFFDD}"
+EndProject
+Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		MarkMpn.FetchXmlToWebAPI\MarkMpn.FetchXmlToWebAPI.projitems*{543e6d79-2913-4b00-aaac-5661f6adb1a5}*SharedItemsImports = 13
+		MarkMpn.FetchXmlToWebAPI\MarkMpn.FetchXmlToWebAPI.projitems*{e463d224-eb4f-4808-bfa1-66abfbfcffdd}*SharedItemsImports = 4
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E463D224-EB4F-4808-BFA1-66ABFBFCFFDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E463D224-EB4F-4808-BFA1-66ABFBFCFFDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E463D224-EB4F-4808-BFA1-66ABFBFCFFDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E463D224-EB4F-4808-BFA1-66ABFBFCFFDD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A2D85DB1-6AB6-4185-AF31-8E437B8F2838}
+	EndGlobalSection
+EndGlobal
