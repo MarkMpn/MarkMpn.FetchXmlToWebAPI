@@ -392,17 +392,17 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
                 new EntityMetadata
                 {
                     LogicalName = "account",
-                    LogicalCollectionName = "accounts"
+                    EntitySetName = "accounts"
                 },
                 new EntityMetadata
                 {
                     LogicalName = "contact",
-                    LogicalCollectionName = "contacts"
+                    EntitySetName = "contacts"
                 },
                 new EntityMetadata
                 {
                     LogicalName = "connection",
-                    LogicalCollectionName = "connections"
+                    EntitySetName = "connections"
                 }
             };
 
