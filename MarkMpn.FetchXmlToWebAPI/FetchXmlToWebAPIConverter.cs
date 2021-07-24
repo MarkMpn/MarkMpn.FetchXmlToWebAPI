@@ -986,7 +986,7 @@ namespace MarkMpn.FetchXmlToWebAPI
         private string LogicalToCollectionName(string entity)
         {
             var entityMeta = _metadata.GetEntity(entity);
-            return entityMeta.LogicalCollectionName;
+            return entityMeta.EntitySetName ?? entityMeta.LogicalCollectionName;
         }
 
         private string LinkItemToNavigationProperty(string entityname, FetchLinkEntityType linkitem, out bool child, out FetchLinkEntityType manyToManyNextLink)
