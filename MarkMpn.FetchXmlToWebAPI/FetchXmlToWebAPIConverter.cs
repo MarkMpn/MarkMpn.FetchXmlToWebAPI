@@ -430,6 +430,7 @@ namespace MarkMpn.FetchXmlToWebAPI
                 string function = null;
                 var functionParameters = 1;
                 var functionParameterType = typeof(string);
+                var value = condition.value;
 
                 switch (condition.@operator)
                 {
@@ -452,26 +453,39 @@ namespace MarkMpn.FetchXmlToWebAPI
                         break;
                     case @operator.like:
                     case @operator.notlike:
-                        var value = condition.value;
-                        var func = "contains";
-
-                        if (value.IndexOf('%') == value.Length - 1)
-                        {
-                            value = value.Substring(0, value.Length - 1);
-                            func = "startswith";
-                        }
-                        else if (value.LastIndexOf('%') == 0)
-                        {
+                        var hasInitialWildcard = value.StartsWith("%");
+                        if (hasInitialWildcard)
                             value = value.Substring(1);
-                            func = "endswith";
-                        }
+                        var hasTerminalWildcard = value.EndsWith("%");
+                        if (hasTerminalWildcard)
+                            value = value.Substring(0, value.Length - 1);
 
-                        result = $"{func}({HttpUtility.UrlEncode(navigationProperty + attrMeta.LogicalName)}, {FormatValue(typeof(string), value)})";
+                        if (!AreAllLikeWildcardsEscaped(value))
+                            throw new NotSupportedException("OData queries do not support complex LIKE wildcards. Only % at the start or end of the value is supported");
+
+                        value = UnescapeLikeWildcards(value);
+
+                        if (!hasInitialWildcard && !hasTerminalWildcard)
+                        {
+                            result += " eq ";
+                        }
+                        else
+                        {
+                            string func;
+
+                            if (hasInitialWildcard && hasTerminalWildcard)
+                                func = "contains";
+                            else if (hasInitialWildcard)
+                                func = "endswith";
+                            else
+                                func = "startswith";
+
+                            result = $"{func}({HttpUtility.UrlEncode(navigationProperty + attrMeta.LogicalName)}, {FormatValue(typeof(string), value)})";
+                        }
 
                         if (condition.@operator == @operator.notlike)
-                        {
                             result = "not " + result;
-                        }
+
                         break;
                     case @operator.beginswith:
                     case @operator.notbeginwith:
@@ -774,7 +788,7 @@ namespace MarkMpn.FetchXmlToWebAPI
                         return $"{navigationProperty}Microsoft.Dynamics.CRM.{HttpUtility.UrlEncode(function)}(PropertyName='{HttpUtility.UrlEncode(attrMeta.LogicalName)}',{String.Join(",", condition.Items.Select((i, idx) => $"Property{idx + 1}={FormatValue(functionParameterType, i.Value)}"))})";
                 }
 
-                if (!string.IsNullOrEmpty(condition.value) && !result.Contains("("))
+                if (!string.IsNullOrEmpty(value) && !result.Contains("("))
                 {
                     var valueType = typeof(string);
 
@@ -817,7 +831,7 @@ namespace MarkMpn.FetchXmlToWebAPI
                             break;
                     }
 
-                    result += FormatValue(valueType, condition.value);
+                    result += FormatValue(valueType, value);
                 }
                 else if (!string.IsNullOrEmpty(condition.valueof))
                 {
@@ -825,6 +839,61 @@ namespace MarkMpn.FetchXmlToWebAPI
                 }
             }
             return result;
+        }
+
+        private bool AreAllLikeWildcardsEscaped(string value)
+        {
+            var bracketStart = -1;
+
+            for (var i = 0; i < value.Length; i++)
+            {
+                var ch = value[i];
+
+                if (ch != '%' && ch != '_' && ch != '[' && ch != ']')
+                {
+                    if (bracketStart != -1)
+                    {
+                        // We've got a non-wildcard character in brackets - it's not an escaped wildcard
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (bracketStart == -1)
+                {
+                    if (ch == '[')
+                    {
+                        bracketStart = i;
+                    }
+                    else
+                    {
+                        // We've got a wildcard character outside of brackets - it's not escaped
+                        return false;
+                    }
+                }
+
+                if (ch == ']')
+                {
+                    if (i > bracketStart + 2)
+                    {
+                        // We've got more than a single character in the brackets - it's not a single escaped wildcard
+                        return false;
+                    }
+
+                    bracketStart = -1;
+                }
+            }
+
+            return true;
+        }
+
+        private string UnescapeLikeWildcards(string value)
+        {
+            return value
+                .Replace("[_]", "_")
+                .Replace("[%]", "%")
+                .Replace("[[]", "[");
         }
 
         private FetchLinkEntityType FindLinkEntity(string entityName, object[] items, string alias, string path, out string navigationProperty, out bool child)
