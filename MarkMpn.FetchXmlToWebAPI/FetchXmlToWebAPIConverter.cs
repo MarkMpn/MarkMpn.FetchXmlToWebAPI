@@ -426,7 +426,14 @@ namespace MarkMpn.FetchXmlToWebAPI
                 {
                     throw new NotSupportedException($"No metadata for attribute: {entityName}.{condition.attribute}");
                 }
+
                 result = navigationProperty + GetPropertyName(attrMeta);
+                
+                if (attrMeta is ManagedPropertyAttributeMetadata)
+                {
+                    result += "/Value";
+                }
+                
                 string function = null;
                 var functionParameters = 1;
                 var functionParameterType = typeof(string);
@@ -791,8 +798,12 @@ namespace MarkMpn.FetchXmlToWebAPI
                 if (!string.IsNullOrEmpty(value) && !result.Contains("("))
                 {
                     var valueType = typeof(string);
+                    var typeCode = attrMeta.AttributeType;
 
-                    switch (attrMeta.AttributeType)
+                    if (attrMeta is ManagedPropertyAttributeMetadata managedPropAttr)
+                        typeCode = managedPropAttr.ValueAttributeTypeCode;
+
+                    switch (typeCode)
                     {
                         case AttributeTypeCode.Money:
                         case AttributeTypeCode.Decimal:

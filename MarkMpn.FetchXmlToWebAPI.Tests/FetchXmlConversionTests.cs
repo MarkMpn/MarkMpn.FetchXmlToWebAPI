@@ -433,6 +433,25 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
             Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/connections?$select=connectionid&$filter=(record1objecttypecode eq 8)", odata);
         }
 
+        [TestMethod]
+        public void FilterOnManagedProperty()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='webresource'>
+                        <attribute name='name' />
+                        <attribute name='iscustomizable' />
+                        <filter>
+                            <condition attribute='iscustomizable' operator='eq' value='1' />
+                        </filter>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/webresourceset?$select=name,iscustomizable&$filter=(iscustomizable/Value eq true)", odata);
+        }
+
         private string ConvertFetchToOData(string fetch)
         {
             var context = new XrmFakedContext();
@@ -474,6 +493,11 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
                 {
                     LogicalName = "connection",
                     EntitySetName = "connections"
+                },
+                new EntityMetadata
+                {
+                    LogicalName = "webresource",
+                    EntitySetName = "webresourceset"
                 }
             };
 
@@ -533,9 +557,25 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
                     {
                         LogicalName = "record1objecttypecode"
                     }
+                },
+                ["webresource"] = new AttributeMetadata[]
+                {
+                    new UniqueIdentifierAttributeMetadata
+                    {
+                        LogicalName = "webresourceid"
+                    },
+                    new StringAttributeMetadata
+                    {
+                        LogicalName = "name"
+                    },
+                    new ManagedPropertyAttributeMetadata
+                    {
+                        LogicalName = "iscustomizable"
+                    }
                 }
             };
 
+            SetSealedProperty(attributes["webresource"].Single(a => a.LogicalName == "iscustomizable"), nameof(ManagedPropertyAttributeMetadata.ValueAttributeTypeCode), AttributeTypeCode.Boolean);
             SetRelationships(entities, relationships);
             SetAttributes(entities, attributes);
 
