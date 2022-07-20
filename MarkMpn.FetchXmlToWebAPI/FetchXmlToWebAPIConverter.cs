@@ -826,7 +826,6 @@ namespace MarkMpn.FetchXmlToWebAPI
                         case AttributeTypeCode.State:
                         case AttributeTypeCode.Status:
                         case AttributeTypeCode.Picklist:
-                        case AttributeTypeCode.EntityName:
                             valueType = typeof(int);
                             break;
 
@@ -839,6 +838,13 @@ namespace MarkMpn.FetchXmlToWebAPI
 
                         case AttributeTypeCode.DateTime:
                             valueType = typeof(DateTime);
+                            break;
+
+                        case AttributeTypeCode.EntityName:
+                            valueType = typeof(string);
+
+                            if (Int32.TryParse(value, out var otc))
+                                value = _metadata.GetEntity(otc).LogicalName;
                             break;
                     }
 
