@@ -45,10 +45,11 @@
     <Compile Include="FetchXmlConversionTests.cs" />
     <Compile Include="MetadataProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RetrieveAllEntitiesRequestExecutor.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FakeXrmEasy.9">
-      <Version>1.57.1</Version>
+      <Version>1.58.1</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies">
       <Version>9.0.2.29</Version>

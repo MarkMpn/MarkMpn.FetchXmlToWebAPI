@@ -5,6 +5,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using FakeXrmEasy;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 
 namespace MarkMpn.FetchXmlToWebAPI.Tests
@@ -402,17 +403,20 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
         {
             var fetch = @"
                 <fetch>
-                    <entity name='connection'>
-                        <attribute name='connectionid' />
+                    <entity name='stringmap'>
+                        <attribute name='attributevalue' />
+                        <attribute name='attributename' />
+                        <attribute name='value' />
                         <filter>
-                            <condition attribute='record1idobjecttypecode' operator='eq' value='8' />
+                            <condition attribute='attributename' operator='eq' value='prioritycode' />
+                            <condition attribute='objecttypecode' operator='eq' value='112' />
                         </filter>
                     </entity>
                 </fetch>";
 
             var odata = ConvertFetchToOData(fetch);
 
-            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/connections?$select=connectionid&$filter=(record1idobjecttypecode eq 8)", odata);
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/stringmaps?$select=attributevalue,attributename,value&$filter=(attributename eq 'prioritycode' and objecttypecode eq 'incident')", odata);
         }
 
         [TestMethod]
@@ -498,6 +502,16 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
                 {
                     LogicalName = "webresource",
                     EntitySetName = "webresourceset"
+                },
+                new EntityMetadata
+                {
+                    LogicalName = "stringmap",
+                    EntitySetName = "stringmaps"
+                },
+                new EntityMetadata
+                {
+                    LogicalName = "incident",
+                    EntitySetName = "incidents"
                 }
             };
 
@@ -549,13 +563,39 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
                     {
                         LogicalName = "connectionid"
                     },
-                    new EntityNameAttributeMetadata
-                    {
-                        LogicalName = "record1idobjecttypecode"
-                    },
                     new PicklistAttributeMetadata
                     {
                         LogicalName = "record1objecttypecode"
+                    }
+                },
+                ["incident"] = new AttributeMetadata[]
+                {
+                    new UniqueIdentifierAttributeMetadata
+                    {
+                        LogicalName = "incidentid"
+                    }
+                },
+                ["stringmap"] = new AttributeMetadata[]
+                {
+                    new UniqueIdentifierAttributeMetadata
+                    {
+                        LogicalName = "stringmapid"
+                    },
+                    new EntityNameAttributeMetadata
+                    {
+                        LogicalName = "objecttypecode"
+                    },
+                    new StringAttributeMetadata
+                    {
+                        LogicalName = "attributename"
+                    },
+                    new IntegerAttributeMetadata
+                    {
+                        LogicalName = "attributevalue"
+                    },
+                    new StringAttributeMetadata
+                    {
+                        LogicalName = "value"
                     }
                 },
                 ["webresource"] = new AttributeMetadata[]
@@ -578,10 +618,12 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
             SetSealedProperty(attributes["webresource"].Single(a => a.LogicalName == "iscustomizable"), nameof(ManagedPropertyAttributeMetadata.ValueAttributeTypeCode), AttributeTypeCode.Boolean);
             SetRelationships(entities, relationships);
             SetAttributes(entities, attributes);
+            SetSealedProperty(entities.Single(e => e.LogicalName == "incident"), nameof(EntityMetadata.ObjectTypeCode), 112);
 
             foreach (var entity in entities)
                 context.SetEntityMetadata(entity);
 
+            context.AddFakeMessageExecutor<RetrieveAllEntitiesRequest>(new RetrieveAllEntitiesRequestExecutor(entities));
             var org = context.GetOrganizationService();
             var converter = new FetchXmlToWebAPIConverter(new MetadataProvider(org), $"https://example.crm.dynamics.com/api/data/v9.0");
             return converter.ConvertFetchXmlToWebAPI(fetch);
