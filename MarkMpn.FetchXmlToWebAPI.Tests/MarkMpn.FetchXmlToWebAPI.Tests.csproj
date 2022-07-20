@@ -45,6 +45,8 @@
     <Compile Include="FetchXmlConversionTests.cs" />
     <Compile Include="MetadataProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PropertyEqualityAssert.cs" />
+    <Compile Include="WebAPIConversionTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FakeXrmEasy.9">
@@ -52,6 +54,15 @@
     </PackageReference>
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies">
       <Version>9.0.2.29</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Data.OData">
+      <Version>5.8.4</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.OData.Core">
+      <Version>7.9.2</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.OData.Edm">
+      <Version>7.9.2</Version>
     </PackageReference>
     <PackageReference Include="MSTest.TestAdapter">
       <Version>2.1.1</Version>
