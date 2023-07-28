@@ -484,6 +484,24 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
             ConvertFetchToOData(fetch);
         }
 
+        [TestMethod]
+        public void FilterOnPrimaryKey()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='account'>
+                        <attribute name='name' />
+                        <filter>
+                            <condition attribute='accountid' operator='eq' value='3fee3d59-68c9-ed11-b597-0022489b41c4' />
+                        </filter>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=name&$filter=(accountid eq '3fee3d59-68c9-ed11-b597-0022489b41c4')", odata);
+        }
+
         private string ConvertFetchToOData(string fetch)
         {
             var context = new XrmFakedContext();
