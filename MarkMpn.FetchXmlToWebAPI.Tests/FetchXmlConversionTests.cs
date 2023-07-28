@@ -456,6 +456,34 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
             Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/webresourceset?$select=name,iscustomizable&$filter=(iscustomizable/Value eq true)", odata);
         }
 
+        [TestMethod]
+        [ExpectedException(typeof(NotSupportedException))]
+        public void Skip()
+        {
+            var fetch = @"
+                <fetch count='10' page='3'>
+                    <entity name='account'>
+                        <attribute name='name' />
+                    </entity>
+                </fetch>";
+
+            ConvertFetchToOData(fetch);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(NotSupportedException))]
+        public void Archive()
+        {
+            var fetch = @"
+                <fetch datasource='archive'>
+                    <entity name='account'>
+                        <attribute name='name' />
+                    </entity>
+                </fetch>";
+
+            ConvertFetchToOData(fetch);
+        }
+
         private string ConvertFetchToOData(string fetch)
         {
             var context = new XrmFakedContext();

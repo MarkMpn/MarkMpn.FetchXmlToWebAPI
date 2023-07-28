@@ -12,6 +12,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)FetchXml.cs">
       <DependentUpon>FetchXml.xsd</DependentUpon>
     </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)FetchXmlExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IMetadataProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)FetchXmlToWebAPIConverter.cs" />
   </ItemGroup>
