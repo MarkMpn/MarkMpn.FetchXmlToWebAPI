@@ -72,6 +72,8 @@ namespace MarkMpn.FetchXmlToWebAPI
         {
             public int? Top { get; set; }
 
+            public int? PageSize { get; set; }
+
             public List<OrderOData> OrderBy { get; } = new List<OrderOData>();
 
             public List<string> Groups { get; } = new List<string>();
@@ -151,6 +153,24 @@ namespace MarkMpn.FetchXmlToWebAPI
         /// <returns>The equivalent Web API format query</returns>
         public string ConvertFetchXmlToWebAPI(string fetch)
         {
+            var url = ConvertFetchXmlToWebAPI(fetch, out var preferHeaders);
+
+            if (preferHeaders != null && preferHeaders.Length > 0)
+            {
+                throw new NotSupportedException("A Prefer header is required in addition to the URL");
+            }
+
+            return url;
+        }
+
+        /// <summary>
+        /// Converts a FetchXML query to Web API format
+        /// </summary>
+        /// <param name="fetch">The FetchXML query to convert</param>
+        /// <param name="preferHeader">The value to set the Prefer header to</param>
+        /// <returns>The equivalent Web API format query</returns>
+        public string ConvertFetchXmlToWebAPI(string fetch, out string[] preferHeaders)
+        {
             if (!_metadata.IsConnected)
             {
                 throw new InvalidOperationException("Must have an active connection to CRM to compose OData query.");
@@ -164,12 +184,30 @@ namespace MarkMpn.FetchXmlToWebAPI
                 var converted = ConvertOData(parsed);
 
                 var url = _orgUrl + converted;
+
+                if (converted.PageSize != null)
+                    preferHeaders = new[] { $"odata.maxpagesize={converted.PageSize}" };
+                else
+                    preferHeaders = null;
+
                 return url;
             }
         }
 
         private EntityOData ConvertOData(FetchType fetch)
         {
+            if (!string.IsNullOrEmpty(fetch.datasource))
+            {
+                throw new NotSupportedException("Only live data is supported in Web API");
+            }
+
+            if (!string.IsNullOrEmpty(fetch.page) && fetch.page != "1")
+            {
+                // Should be able to use $skip to move to subsequent pages, but this generates an error from Web API:
+                // {"error":{"code":"0x80060888","message":"Skip Clause is not supported in CRM"}}
+                throw new NotSupportedException("Skipping to subsequent pages is not supported in Web API. Load the first page and follow the @odata.nextLink URLs to get to subsequent pages");
+            }
+
             var entity = fetch.Items.Where(i => i is FetchEntityType).FirstOrDefault() as FetchEntityType;
 
             if (entity == null)
@@ -969,7 +1007,7 @@ namespace MarkMpn.FetchXmlToWebAPI
                 return s == "1" ? "true" : "false";
 
             if (type == typeof(Guid))
-                return Guid.Parse(s).ToString();
+                return "'" + Guid.Parse(s).ToString() + "'";
 
             return HttpUtility.UrlEncode(Convert.ChangeType(s, type).ToString());
         }

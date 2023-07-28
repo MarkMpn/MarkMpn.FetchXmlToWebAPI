@@ -456,6 +456,100 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
             Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/webresourceset?$select=name,iscustomizable&$filter=(iscustomizable/Value eq true)", odata);
         }
 
+        [TestMethod]
+        [ExpectedException(typeof(NotSupportedException))]
+        public void Skip()
+        {
+            var fetch = @"
+                <fetch count='10' page='3'>
+                    <entity name='account'>
+                        <attribute name='name' />
+                    </entity>
+                </fetch>";
+
+            ConvertFetchToOData(fetch);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(NotSupportedException))]
+        public void Archive()
+        {
+            var fetch = @"
+                <fetch datasource='archive'>
+                    <entity name='account'>
+                        <attribute name='name' />
+                    </entity>
+                </fetch>";
+
+            ConvertFetchToOData(fetch);
+        }
+
+        [TestMethod]
+        public void FilterOnPrimaryKey()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='account'>
+                        <attribute name='name' />
+                        <filter>
+                            <condition attribute='accountid' operator='eq' value='3fee3d59-68c9-ed11-b597-0022489b41c4' />
+                        </filter>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=name&$filter=(accountid eq '3fee3d59-68c9-ed11-b597-0022489b41c4')", odata);
+        }
+
+        [TestMethod]
+        public void InnerJoinChildLinkWithNoChildren()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='account'>
+                        <attribute name='name' />
+                        <link-entity name='contact' from='parentcustomerid' to='accountid' link-type='inner'>
+                        </link-entity>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=name&$filter=(contact_customer_accounts/any(o1:(o1/contactid ne null)))", odata);
+        }
+
+        [TestMethod]
+        public void FilterWithNoChildren()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='account'>
+                        <attribute name='name' />
+                        <filter>
+                        </filter>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=name", odata);
+        }
+
+        [TestMethod]
+        public void EntityWithNoChildren()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='account'>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts", odata);
+        }
+
         private string ConvertFetchToOData(string fetch)
         {
             var context = new XrmFakedContext();
