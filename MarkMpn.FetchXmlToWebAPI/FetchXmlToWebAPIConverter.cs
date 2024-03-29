@@ -1007,7 +1007,7 @@ namespace MarkMpn.FetchXmlToWebAPI
                 return s == "1" ? "true" : "false";
 
             if (type == typeof(Guid))
-                return "'" + Guid.Parse(s).ToString() + "'";
+                return Guid.Parse(s).ToString();
 
             return HttpUtility.UrlEncode(Convert.ChangeType(s, type).ToString());
         }
