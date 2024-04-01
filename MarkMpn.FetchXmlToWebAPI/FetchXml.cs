@@ -915,6 +915,7 @@ namespace MarkMpn.FetchXmlToWebAPI {
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute("condition", typeof(condition))]
         [System.Xml.Serialization.XmlElementAttribute("filter", typeof(filter))]
+        [System.Xml.Serialization.XmlElementAttribute("link-entity", typeof(FetchLinkEntityType))]
         public object[] Items {
             get {
                 return this.itemsField;

@@ -568,6 +568,115 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
             Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts", odata);
         }
 
+        [TestMethod]
+        public void FilterAll()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='account'>
+                        <filter>
+                            <link-entity name='contact' from='parentcustomerid' to='accountid' link-type='all'>
+                                <filter>
+                                    <condition attribute='firstname' operator='eq' value='Mark' />
+                                </filter>
+                            </link-entity>
+                        </filter>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(contact_customer_accounts/all(x1:(x1/firstname eq 'Mark')))", odata);
+        }
+
+        [TestMethod]
+        public void FilterAny()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='account'>
+                        <filter>
+                            <link-entity name='contact' from='parentcustomerid' to='accountid' link-type='any'>
+                                <filter>
+                                    <condition attribute='firstname' operator='eq' value='Mark' />
+                                </filter>
+                            </link-entity>
+                        </filter>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(contact_customer_accounts/any(x1:(x1/firstname eq 'Mark')))", odata);
+        }
+
+        [TestMethod]
+        public void FilterNotAny()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='account'>
+                        <filter>
+                            <link-entity name='contact' from='parentcustomerid' to='accountid' link-type='not any'>
+                                <filter>
+                                    <condition attribute='firstname' operator='eq' value='Mark' />
+                                </filter>
+                            </link-entity>
+                        </filter>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(not contact_customer_accounts/any(x1:(x1/firstname ne 'Mark')))", odata);
+        }
+
+        [TestMethod]
+        public void FilterNotAll()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='account'>
+                        <filter>
+                            <link-entity name='contact' from='parentcustomerid' to='accountid' link-type='not all'>
+                                <filter>
+                                    <condition attribute='firstname' operator='eq' value='Mark' />
+                                </filter>
+                            </link-entity>
+                        </filter>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(not contact_customer_accounts/all(x1:(x1/firstname ne 'Mark')))", odata);
+        }
+
+        [TestMethod]
+        public void FilterNotAllNestedNotAny()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='account'>
+                        <filter>
+                            <link-entity name='contact' from='parentcustomerid' to='accountid' link-type='not all'>
+                                <filter>
+                                    <link-entity name='account' from='primarycontactid' to='contactid' link-type='not any'>
+                                        <filter>
+                                            <condition attribute='name' operator='eq' value='Data8' />
+                                        </filter>
+                                    </link-entity>
+                                </filter>
+                            </link-entity>
+                        </filter>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(not contact_customer_accounts/all(x1:(x1/account_primarycontact/any(x2:(x2/name eq 'Data8')))))", odata);
+        }
+
         private string ConvertFetchToOData(string fetch)
         {
             var context = new XrmFakedContext();
