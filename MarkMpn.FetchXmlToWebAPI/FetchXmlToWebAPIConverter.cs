@@ -362,9 +362,17 @@ namespace MarkMpn.FetchXmlToWebAPI
 
         private IEnumerable<string> ConvertSelect(string entityName, object[] items)
         {
+            // A missing $select is equivalent to selecting all attributes
+            if (items.OfType<allattributes>().Any())
+                return Array.Empty<string>();
+
             var attributeitems = items
                 .OfType<FetchAttributeType>()
                 .Where(i => i.name != null);
+
+            // If we don't want to select any attributes, just include the primary key
+            if (!attributeitems.Any())
+                return new[] { _metadata.GetEntity(entityName).PrimaryIdAttribute };
 
             return GetAttributeNames(entityName, attributeitems);
         }

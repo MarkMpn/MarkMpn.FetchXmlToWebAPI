@@ -586,7 +586,7 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
 
             var odata = ConvertFetchToOData(fetch);
 
-            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(contact_customer_accounts/all(x1:(x1/firstname eq 'Mark')))", odata);
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=accountid&$filter=(contact_customer_accounts/all(x1:(x1/firstname eq 'Mark')))", odata);
         }
 
         [TestMethod]
@@ -607,7 +607,7 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
 
             var odata = ConvertFetchToOData(fetch);
 
-            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(contact_customer_accounts/any(x1:(x1/firstname eq 'Mark')))", odata);
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=accountid&$filter=(contact_customer_accounts/any(x1:(x1/firstname eq 'Mark')))", odata);
         }
 
         [TestMethod]
@@ -628,7 +628,7 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
 
             var odata = ConvertFetchToOData(fetch);
 
-            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(not contact_customer_accounts/any(x1:(x1/firstname ne 'Mark')))", odata);
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=accountid&$filter=(not contact_customer_accounts/any(x1:(x1/firstname ne 'Mark')))", odata);
         }
 
         [TestMethod]
@@ -649,7 +649,7 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
 
             var odata = ConvertFetchToOData(fetch);
 
-            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(not contact_customer_accounts/all(x1:(x1/firstname ne 'Mark')))", odata);
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=accountid&$filter=(not contact_customer_accounts/all(x1:(x1/firstname ne 'Mark')))", odata);
         }
 
         [TestMethod]
@@ -674,7 +674,22 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
 
             var odata = ConvertFetchToOData(fetch);
 
-            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(not contact_customer_accounts/all(x1:(x1/account_primarycontact/any(x2:(x2/name eq 'Data8')))))", odata);
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=accountid&$filter=(not contact_customer_accounts/all(x1:(x1/account_primarycontact/any(x2:(x2/name eq 'Data8')))))", odata);
+        }
+
+        [TestMethod]
+        public void SelectAllAttributes()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='contact'>
+                        <all-attributes />
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/contacts", odata);
         }
 
         private string ConvertFetchToOData(string fetch)
