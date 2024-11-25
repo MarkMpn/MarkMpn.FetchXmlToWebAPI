@@ -339,24 +339,28 @@ namespace MarkMpn.FetchXmlToWebAPI
 
         private IEnumerable<LinkEntityOData> ConvertJoins(string entityName, object[] items, object[] rootEntityItems)
         {
-            foreach (var linkEntity in items.OfType<FetchLinkEntityType>().Where(l => l.Items != null && l.Items.Any()))
+            foreach (var linkEntity in items.OfType<FetchLinkEntityType>())
             {
                 var currentLinkEntity = linkEntity;
                 var expand = new LinkEntityOData();
                 expand.PropertyName = LinkItemToNavigationProperty(entityName, currentLinkEntity, out var child, out var manyToManyNextLink);
                 currentLinkEntity = manyToManyNextLink ?? currentLinkEntity;
-                expand.Select.AddRange(ConvertSelect(currentLinkEntity.name, currentLinkEntity.Items));
 
-                if (linkEntity.linktype == "outer" || child)
+                if (currentLinkEntity.Items != null)
                 {
-                    // Don't need to add filters at this point for single-valued properties in inner joins, they'll be added separately later
-                    expand.Filter.AddRange(ConvertFilters(currentLinkEntity.name, currentLinkEntity.Items, rootEntityItems));
+                    expand.Select.AddRange(ConvertSelect(currentLinkEntity.name, currentLinkEntity.Items));
+
+                    if (linkEntity.linktype == "outer" || child)
+                    {
+                        // Don't need to add filters at this point for single-valued properties in inner joins, they'll be added separately later
+                        expand.Filter.AddRange(ConvertFilters(currentLinkEntity.name, currentLinkEntity.Items, rootEntityItems));
+                    }
+
+                    // Recurse into child joins
+                    expand.Expand.AddRange(ConvertJoins(currentLinkEntity.name, currentLinkEntity.Items, rootEntityItems));
+                
+                    yield return expand;
                 }
-
-                // Recurse into child joins
-                expand.Expand.AddRange(ConvertJoins(currentLinkEntity.name, currentLinkEntity.Items, rootEntityItems));
-
-                yield return expand;
             }
         }
 
