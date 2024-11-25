@@ -586,7 +586,7 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
 
             var odata = ConvertFetchToOData(fetch);
 
-            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(contact_customer_accounts/all(x1:(x1/firstname eq 'Mark')))", odata);
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=accountid&$filter=(contact_customer_accounts/all(x1:(x1/firstname eq 'Mark')))", odata);
         }
 
         [TestMethod]
@@ -607,7 +607,7 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
 
             var odata = ConvertFetchToOData(fetch);
 
-            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(contact_customer_accounts/any(x1:(x1/firstname eq 'Mark')))", odata);
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=accountid&$filter=(contact_customer_accounts/any(x1:(x1/firstname eq 'Mark')))", odata);
         }
 
         [TestMethod]
@@ -628,7 +628,7 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
 
             var odata = ConvertFetchToOData(fetch);
 
-            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(not contact_customer_accounts/any(x1:(x1/firstname ne 'Mark')))", odata);
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=accountid&$filter=(not contact_customer_accounts/any(x1:(x1/firstname ne 'Mark')))", odata);
         }
 
         [TestMethod]
@@ -649,7 +649,7 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
 
             var odata = ConvertFetchToOData(fetch);
 
-            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(not contact_customer_accounts/all(x1:(x1/firstname ne 'Mark')))", odata);
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=accountid&$filter=(not contact_customer_accounts/all(x1:(x1/firstname ne 'Mark')))", odata);
         }
 
         [TestMethod]
@@ -674,7 +674,39 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
 
             var odata = ConvertFetchToOData(fetch);
 
-            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$filter=(not contact_customer_accounts/all(x1:(x1/account_primarycontact/any(x2:(x2/name eq 'Data8')))))", odata);
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/accounts?$select=accountid&$filter=(not contact_customer_accounts/all(x1:(x1/account_primarycontact/any(x2:(x2/name eq 'Data8')))))", odata);
+        }
+
+        [TestMethod]
+        public void SelectAllAttributes()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='contact'>
+                        <all-attributes />
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/contacts", odata);
+        }
+
+        [TestMethod]
+        public void InnerJoinManyToManyWithNoChildren()
+        {
+            var fetch = @"
+                <fetch>
+                    <entity name='contact'>
+                        <link-entity name='listmember' from='entityid' to='contactid' link-type='inner' intersect='true'>
+                            <link-entity name='list' from='listid' to='listid' link-type='inner' />
+                        </link-entity>
+                    </entity>
+                </fetch>";
+
+            var odata = ConvertFetchToOData(fetch);
+
+            Assert.AreEqual("https://example.crm.dynamics.com/api/data/v9.0/contacts?$select=contactid&$filter=(lists/any(o1:(o1/listid ne null)))", odata);
         }
 
         private string ConvertFetchToOData(string fetch)
@@ -699,6 +731,19 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
                     ReferencedAttribute = "contactid",
                     ReferencingEntity = "account",
                     ReferencingAttribute = "primarycontactid"
+                }
+            };
+            var nnRelationships = new[]
+            {
+                new ManyToManyRelationshipMetadata
+                {
+                    SchemaName = "contact_list",
+                    Entity1LogicalName = "contact",
+                    Entity1IntersectAttribute = "entityid",
+                    Entity1NavigationPropertyName = "lists",
+                    Entity2LogicalName = "list",
+                    Entity2IntersectAttribute = "listid",
+                    Entity2NavigationPropertyName = "contacts"
                 }
             };
 
@@ -733,6 +778,16 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
                 {
                     LogicalName = "incident",
                     EntitySetName = "incidents"
+                },
+                new EntityMetadata
+                {
+                    LogicalName = "list",
+                    EntitySetName = "lists"
+                },
+                new EntityMetadata
+                {
+                    LogicalName = "listmember",
+                    EntitySetName = "listmembers"
                 }
             };
 
@@ -833,6 +888,34 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
                     {
                         LogicalName = "iscustomizable"
                     }
+                },
+                ["listmember"] = new AttributeMetadata[]
+                {
+                    new UniqueIdentifierAttributeMetadata
+                    {
+                        LogicalName = "listmemberid"
+                    },
+                    new LookupAttributeMetadata
+                    {
+                        LogicalName = "entityid",
+                        Targets = new[] { "contact" }
+                    },
+                    new LookupAttributeMetadata
+                    {
+                        LogicalName = "listid",
+                        Targets = new[] { "list" }
+                    }
+                },
+                ["list"] = new AttributeMetadata[]
+                {
+                    new UniqueIdentifierAttributeMetadata
+                    {
+                        LogicalName = "listid"
+                    },
+                    new StringAttributeMetadata
+                    {
+                        LogicalName = "name"
+                    }
                 }
             };
 
@@ -840,6 +923,9 @@ namespace MarkMpn.FetchXmlToWebAPI.Tests
             SetRelationships(entities, relationships);
             SetAttributes(entities, attributes);
             SetSealedProperty(entities.Single(e => e.LogicalName == "incident"), nameof(EntityMetadata.ObjectTypeCode), 112);
+            SetSealedProperty(entities.Single(e => e.LogicalName == "contact"), nameof(EntityMetadata.ManyToManyRelationships), nnRelationships);
+            SetSealedProperty(entities.Single(e => e.LogicalName == "listmember"), nameof(EntityMetadata.ManyToManyRelationships), nnRelationships);
+            SetSealedProperty(entities.Single(e => e.LogicalName == "list"), nameof(EntityMetadata.ManyToManyRelationships), nnRelationships);
 
             foreach (var entity in entities)
                 context.SetEntityMetadata(entity);

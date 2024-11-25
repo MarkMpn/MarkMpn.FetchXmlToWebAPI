@@ -339,32 +339,44 @@ namespace MarkMpn.FetchXmlToWebAPI
 
         private IEnumerable<LinkEntityOData> ConvertJoins(string entityName, object[] items, object[] rootEntityItems)
         {
-            foreach (var linkEntity in items.OfType<FetchLinkEntityType>().Where(l => l.Items != null && l.Items.Any()))
+            foreach (var linkEntity in items.OfType<FetchLinkEntityType>())
             {
                 var currentLinkEntity = linkEntity;
                 var expand = new LinkEntityOData();
                 expand.PropertyName = LinkItemToNavigationProperty(entityName, currentLinkEntity, out var child, out var manyToManyNextLink);
                 currentLinkEntity = manyToManyNextLink ?? currentLinkEntity;
-                expand.Select.AddRange(ConvertSelect(currentLinkEntity.name, currentLinkEntity.Items));
 
-                if (linkEntity.linktype == "outer" || child)
+                if (currentLinkEntity.Items != null)
                 {
-                    // Don't need to add filters at this point for single-valued properties in inner joins, they'll be added separately later
-                    expand.Filter.AddRange(ConvertFilters(currentLinkEntity.name, currentLinkEntity.Items, rootEntityItems));
+                    expand.Select.AddRange(ConvertSelect(currentLinkEntity.name, currentLinkEntity.Items));
+
+                    if (linkEntity.linktype == "outer" || child)
+                    {
+                        // Don't need to add filters at this point for single-valued properties in inner joins, they'll be added separately later
+                        expand.Filter.AddRange(ConvertFilters(currentLinkEntity.name, currentLinkEntity.Items, rootEntityItems));
+                    }
+
+                    // Recurse into child joins
+                    expand.Expand.AddRange(ConvertJoins(currentLinkEntity.name, currentLinkEntity.Items, rootEntityItems));
+                
+                    yield return expand;
                 }
-
-                // Recurse into child joins
-                expand.Expand.AddRange(ConvertJoins(currentLinkEntity.name, currentLinkEntity.Items, rootEntityItems));
-
-                yield return expand;
             }
         }
 
         private IEnumerable<string> ConvertSelect(string entityName, object[] items)
         {
+            // A missing $select is equivalent to selecting all attributes
+            if (items.OfType<allattributes>().Any())
+                return Array.Empty<string>();
+
             var attributeitems = items
                 .OfType<FetchAttributeType>()
                 .Where(i => i.name != null);
+
+            // If we don't want to select any attributes, just include the primary key
+            if (!attributeitems.Any())
+                return new[] { _metadata.GetEntity(entityName).PrimaryIdAttribute };
 
             return GetAttributeNames(entityName, attributeitems);
         }
